@@ -88,6 +88,13 @@ class Bundler extends EventEmitter {
 
   async loadPlugins() {
     let pkg = await config.load(this.mainFile, ['package.json']);
+    // this.mainFile
+    // /Users/stevenlu/Workspace/hugin/ITart/testSeries/test-parceljs/index.html
+    // console.log(pkg);
+    // { dependencies: { react: '^16.2.0', 'react-dom': '^16.2.0' },
+    // devDependencies:
+    //  { 'babel-preset-env': '^1.6.1',
+    //    'babel-preset-react': '^6.24.1',
     if (!pkg) {
       return;
     }
@@ -126,16 +133,76 @@ class Bundler extends EventEmitter {
     try {
       // Start worker farm, watcher, etc. if needed
       await this.start();
-
       // If this is the initial bundle, ensure the output directory exists, and resolve the main asset.
       if (isInitialBundle) {
         await fs.mkdirp(this.options.outDir);
 
         this.mainAsset = await this.resolveAsset(this.mainFile);
-        this.buildQueue.add(this.mainAsset);
-      }
+        // console.log(this.mainAsset);
+        // HTMLAsset {
+        //   id: 1,
+        //   name: '/Users/stevenlu/Workspace/hugin/ITart/testSeries/test-parceljs/index.html',
+        //   basename: 'index.html',
+        //   package:
+        //    { dependencies: { react: '^16.2.0', 'react-dom': '^16.2.0' },
+        //      devDependencies:
+        //       { 'babel-preset-env': '^1.6.1',
+        //         'babel-preset-react': '^6.24.1',
+        //         'parcel-bundler': '^1.2.1' },
+        //      pkgfile: '/Users/stevenlu/Workspace/hugin/ITart/testSeries/test-parceljs/package.json' },
+        //   options:
+        //    { outDir: '/Users/stevenlu/Workspace/hugin/ITart/testSeries/test-parceljs/dist',
+        //      publicURL: '/dist',
+        //      watch: true,
+        //      cache: true,
+        //      killWorkers: true,
+        //      minify: false,
+        //      hmr: true,
+        //      logLevel: 3,
+        //      mainFile: '/Users/stevenlu/Workspace/hugin/ITart/testSeries/test-parceljs/index.html',
+        //      extensions:
+        //       { '.js': './assets/JSAsset',
+        //         '.jsx': './assets/JSAsset',
+        //         '.es6': './assets/JSAsset',
+        //         '.jsm': './assets/JSAsset',
+        //         '.mjs': './assets/JSAsset',
+        //         '.ml': './assets/ReasonAsset',
+        //         '.re': './assets/ReasonAsset',
+        //         '.ts': './assets/TypeScriptAsset',
+        //         '.tsx': './assets/TypeScriptAsset',
+        //         '.coffee': './assets/CoffeeScriptAsset',
+        //         '.json': './assets/JSONAsset',
+        //         '.yaml': './assets/YAMLAsset',
+        //         '.yml': './assets/YAMLAsset',
+        //         '.css': './assets/CSSAsset',
+        //         '.pcss': './assets/CSSAsset',
+        //         '.styl': './assets/StylusAsset',
+        //         '.less': './assets/LESSAsset',
+        //         '.sass': './assets/SASSAsset',
+        //         '.scss': './assets/SASSAsset',
+        //         '.html': './assets/HTMLAsset' },
+        //      hmrPort: 52122,
+        //      parser: Parser { extensions: [Object] } },
+        //   encoding: 'utf8',
+        //   type: 'html',
+        //   processed: false,
+        //   contents: null,
+        //   ast: null,
+        //   generated: null,
+        //   hash: null,
+        //   parentDeps: Set {},
+        //   dependencies: Map {},
+        //   depAssets: Map {},
+        //   parentBundle: null,
+        //   bundles: Set {},
 
+        this.buildQueue.add(this.mainAsset);
+        // console.log(this.buildQueue);
+      }
+      // console.log(isInitialBundle);
+      // true
       // Build the queued assets, and produce a bundle tree.
+      console.log('start buildQueuedAssets');
       let bundle = await this.buildQueuedAssets(isInitialBundle);
 
       let buildTime = Date.now() - startTime;
@@ -176,7 +243,7 @@ class Bundler extends EventEmitter {
 
     this.options.extensions = Object.assign({}, this.parser.extensions);
     this.farm = WorkerFarm.getShared(this.options);
-
+    // console.log(this.farm);
     if (this.options.watch) {
       // FS events on macOS are flakey in the tests, which write lots of files very quickly
       // See https://github.com/paulmillr/chokidar/issues/612
@@ -210,12 +277,18 @@ class Bundler extends EventEmitter {
   async buildQueuedAssets(isInitialBundle = false) {
     // Consume the rebuild queue until it is empty.
     let loadedAssets = new Set();
+    console.log('start buildQueuedAssets');
+    // console.log(this.buildQueue);
     while (this.buildQueue.size > 0) {
       let promises = [];
       for (let asset of this.buildQueue) {
+        // console.log(asset);
+        // HTMLAsset
         // Invalidate the asset, unless this is the initial bundle
         if (!isInitialBundle) {
           asset.invalidate();
+          console.log('asset');
+          console.log(asset);
           if (this.cache) {
             this.cache.invalidate(asset.name);
           }
@@ -243,8 +316,13 @@ class Bundler extends EventEmitter {
 
     // Create a new bundle tree and package everything up.
     let bundle = this.createBundleTree(this.mainAsset);
+    // console.log(bundle);
     this.bundleHashes = await bundle.package(this, this.bundleHashes);
-
+    // console.log(this.bundleHashes);
+    // Map {
+    // '/Users/stevenlu/Workspace/hugin/ITart/testSeries/test-parceljs/dist/index.html' => '06c6b837aae8b07020cbbe17bbb0c5ab',
+    // '/Users/stevenlu/Workspace/hugin/ITart/testSeries/test-parceljs/dist/97c63aa18dd1a9cdb6da3785967489c2.html' => '4dd812139b6ba0d98a2e6d51394359a6',
+    // '/Users/stevenlu/Workspace/hugin/ITart/testSeries/test-parceljs/dist/b5ffb784594a8267cb
     // Unload any orphaned assets
     this.unloadOrphanedAssets();
 
@@ -308,7 +386,14 @@ class Bundler extends EventEmitter {
 
     // Mark the asset processed so we don't load it twice
     asset.processed = true;
-
+    // console.log(this.cache);
+    // console.log(asset);
+    // HTMLAsset
+    // JSAsset
+    // asset.name
+    // /Users/stevenlu/Workspace/hugin/ITart/testSeries/test-parceljs/src/test.js
+    // let name = await this.cache.read(asset.name);
+    // console.log(name);
     // First try the cache, otherwise load and compile in the background
     let processed = this.cache && (await this.cache.read(asset.name));
     if (!processed) {
@@ -323,7 +408,9 @@ class Bundler extends EventEmitter {
 
     // Call the delegate to get implicit dependencies
     let dependencies = processed.dependencies;
+    // console.log(dependencies);
     if (this.delegate.getImplicitDependencies) {
+      console.log('getImplicitDependencies');
       let implicitDeps = await this.delegate.getImplicitDependencies(asset);
       if (implicitDeps) {
         dependencies = dependencies.concat(implicitDeps);
@@ -341,7 +428,7 @@ class Bundler extends EventEmitter {
         return assetDep;
       })
     );
-
+    // console.log(assetDeps);
     // Store resolved assets in their original order
     dependencies.forEach((dep, i) => {
       let assetDep = assetDeps[i];

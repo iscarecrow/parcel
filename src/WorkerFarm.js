@@ -28,8 +28,9 @@ class WorkerFarm extends Farm {
 
   promisifyWorker(worker) {
     let res = {};
-
+    // console.log(worker);
     for (let key in worker) {
+      console.log(key);
       res[key] = promisify(worker[key].bind(worker));
     }
 
@@ -60,6 +61,8 @@ class WorkerFarm extends Farm {
     // Child process workers are slow to start (~600ms).
     // While we're waiting, just run on the main thread.
     // This significantly speeds up startup time.
+    // console.log('this.started');
+    // console.log(this.started);
     if (!this.started) {
       return this.localWorker.run(...args);
     } else {
@@ -94,6 +97,9 @@ function getNumWorkers() {
   } catch (err) {
     cores = os.cpus().length;
   }
+  // console.log('cores');
+  // console.log(cores);
+  // 2
   return cores || 1;
 }
 

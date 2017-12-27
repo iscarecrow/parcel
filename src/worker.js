@@ -11,6 +11,7 @@ exports.init = function(options, callback) {
 exports.run = async function(path, pkg, options, callback) {
   try {
     var asset = parser.getAsset(path, pkg, options);
+    console.log(asset);
     await asset.process();
 
     callback(null, {
